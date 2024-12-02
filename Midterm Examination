@@ -1,0 +1,188 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>  
+
+using namespace std;
+
+// Vehicle class
+class Vehicle {
+public:
+    string id, model;
+    double rentalPrice;
+    bool isAvailable = true;
+
+    Vehicle(string i, string m, double rp) : id(i), model(m), rentalPrice(rp) {}
+
+    void display() const {
+        cout << "ID: " << id << ", Model: " << model 
+             << ", Rental Price: PHP" << rentalPrice 
+             << ", Available: " << (isAvailable ? "Yes" : "No") << "\n";
+    }
+
+    void rent() { 
+        isAvailable = !isAvailable; 
+        cout << (isAvailable ? "Vehicle returned!" : "Vehicle rented!") << "\n"; 
+    }
+
+    void updateDetails(string newModel, double newPrice) { 
+        model = newModel; 
+        rentalPrice = newPrice; 
+        cout << "Vehicle updated!\n"; 
+    }
+};
+
+// Customer class
+class Customer {
+public:
+    string name, rentedVehicleId;
+    int rentalDays = 0;
+
+    Customer(string n) : name(n) {}
+
+    void rentVehicle(string vehicleId, int days) { 
+        rentedVehicleId = vehicleId; 
+        rentalDays = days; 
+    }
+
+    void returnVehicle() { 
+        rentedVehicleId = ""; 
+        rentalDays = 0; 
+    }
+};
+
+// Vehicle Rental System class
+class VehicleRentalSystem {
+private:
+    vector<Vehicle> vehicles;
+    vector<Customer> customers;
+    double totalProfit = 0.0;
+
+public:
+    void addVehicle() {
+        string id, model;
+        double price;
+        cout << "Enter Vehicle ID: ";
+        cin >> id;  
+        cin.ignore();  
+        cout << "Enter Model: ";
+        getline(cin, model);  
+        cout << "Enter Rental Price Per Day: ";
+        cin >> price;  
+        vehicles.emplace_back(id, model, price);
+        cout << "Vehicle added!\n\n";  
+    }
+
+    void viewVehicles() {
+        if (vehicles.empty()) {
+            cout << "No vehicles available.\n\n";
+        } else {
+            for (const auto& v : vehicles) v.display();
+        }
+    }
+
+    void rentVehicle() {
+        string customerName, vehicleId;
+        int rentalDays;
+        cout << "Enter Customer Name: ";
+        cin.ignore(); getline(cin, customerName);  
+        cout << "Enter Vehicle ID: ";
+        cin >> vehicleId;
+        cout << "Enter Rental Days: ";
+        cin >> rentalDays;
+
+        
+        auto itCustomer = find_if(customers.begin(), customers.end(), [&](const Customer& c) { return c.name == customerName; });
+        if (itCustomer == customers.end()) {
+            customers.emplace_back(customerName);
+            itCustomer = find_if(customers.begin(), customers.end(), [&](const Customer& c) { return c.name == customerName; });
+        }
+
+        
+        auto itVehicle = find_if(vehicles.begin(), vehicles.end(), [&](const Vehicle& v) { return v.id == vehicleId && v.isAvailable; });
+
+        if (itVehicle != vehicles.end()) {
+            itCustomer->rentVehicle(vehicleId, rentalDays);  
+            itVehicle->rent();  // Mark the vehicle as rented
+            double rentalTotal = itVehicle->rentalPrice * rentalDays;
+            totalProfit += rentalTotal;
+            cout << customerName << " rented vehicle " << vehicleId << " for " << rentalDays << " days.\n"
+                 << "Total rental cost: PHP" << rentalTotal << "\nTotal profit: PHP" << totalProfit << "\n\n";
+        } else {
+            cout << "Vehicle not available.\n\n";
+        }
+    }
+
+    void returnVehicle() {
+        string customerName, vehicleId;
+        cout << "Enter Customer Name: ";
+        cin.ignore(); getline(cin, customerName);  
+        cout << "Enter Vehicle ID: ";
+        cin >> vehicleId;
+
+        auto itCustomer = find_if(customers.begin(), customers.end(), [&](const Customer& c) { return c.name == customerName; });
+        if (itCustomer != customers.end() && itCustomer->rentedVehicleId == vehicleId) {
+            auto itVehicle = find_if(vehicles.begin(), vehicles.end(), [&](const Vehicle& v) { return v.id == vehicleId; });
+            if (itVehicle != vehicles.end()) {
+                itCustomer->returnVehicle();
+                itVehicle->rent();
+                double rentalTotal = itVehicle->rentalPrice * itCustomer->rentalDays;
+                totalProfit -= rentalTotal;
+                cout << customerName << " returned vehicle " << vehicleId << ". Profit: PHP" << totalProfit << "\n\n";
+            }
+        } else {
+            cout << "Customer or vehicle not found.\n\n";
+        }
+    }
+
+    void updateVehicle() {
+        string vehicleId, newModel;
+        double newPrice;
+        cout << "Enter Vehicle ID: ";
+        cin >> vehicleId;  
+        cin.ignore(); 
+        cout << "Enter New Model: ";
+        getline(cin, newModel);  
+        cout << "Enter New Price: ";
+        cin >> newPrice;
+
+        auto itVehicle = find_if(vehicles.begin(), vehicles.end(), [&](const Vehicle& v) { return v.id == vehicleId; });
+        if (itVehicle != vehicles.end()) itVehicle->updateDetails(newModel, newPrice);
+        else cout << "Vehicle not found.\n\n";
+    }
+
+    void deleteVehicle() {
+        string vehicleId;
+        cout << "Enter Vehicle ID to delete: ";
+        cin >> vehicleId;
+        auto it = remove_if(vehicles.begin(), vehicles.end(), [&](const Vehicle& v) { return v.id == vehicleId; });
+        if (it != vehicles.end()) vehicles.erase(it, vehicles.end());
+        else cout << "Vehicle not found.\n\n";
+    }
+
+    void displayMenu() {
+        cout << "1. Add Vehicle\n2. View Vehicles\n3. Update Vehicle\n4. Delete Vehicle\n5. Rent Vehicle\n6. Return Vehicle\n7. Exit\n\n";
+    }
+};
+
+// Main 
+int main() {
+    VehicleRentalSystem system;
+    int choice;
+    do {
+        system.displayMenu();
+        cout << "Choose an option: ";
+        cin >> choice;
+        switch (choice) {
+            case 1: system.addVehicle(); break;
+            case 2: system.viewVehicles(); break;
+            case 3: system.updateVehicle(); break;
+            case 4: system.deleteVehicle(); break;
+            case 5: system.rentVehicle(); break;
+            case 6: system.returnVehicle(); break;
+            case 7: cout << "Exiting...\n\n"; break;
+            default: cout << "Invalid option. Try again.\n\n";
+        }
+    } while (choice != 7);
+    return 0;
+}

@@ -1,0 +1,123 @@
+#include <iostream>
+#include <stack>
+#include <string>
+using namespace std;
+
+int precedence(char op) {
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
+    return 0;
+}
+
+int applyOperation(int a, int b, char op) {
+    switch (op) {
+        case '+': return a + b;
+        case '-': return a - b;
+        case '*': return a * b;
+        case '/': return a / b; 
+    }
+    return 0;
+}
+
+string infixToPostfix(const string &expression) {
+    stack<char> operators;
+    string postfix;
+    for (int i = 0; i < expression.size(); i++) {
+        char current = expression[i];
+        if (isdigit(current)) {
+            postfix += current;
+        } else if (current == '(') {
+            operators.push(current);
+        } else if (current == ')') {
+            while (!operators.empty() && operators.top() != '(') {
+                postfix += operators.top();
+                operators.pop();
+            }
+            operators.pop(); 
+        } else {
+            while (!operators.empty() && precedence(operators.top()) >= precedence(current)) {
+                postfix += operators.top();
+                operators.pop();
+            }
+            operators.push(current);
+        }
+    }
+    while (!operators.empty()) {
+        postfix += operators.top();
+        operators.pop();
+    }
+    return postfix;
+}
+
+string infixToPrefix(const string &expression) {
+    stack<string> operands;
+    stack<char> operators;
+    for (int i = 0; i < expression.size(); i++) {
+        char current = expression[i];
+        if (isdigit(current)) {
+            operands.push(string(1, current));
+        } else if (current == '(') {
+            operators.push(current);
+        } else if (current == ')') {
+            while (!operators.empty() && operators.top() != '(') {
+                string op2 = operands.top(); operands.pop();
+                string op1 = operands.top(); operands.pop();
+                char op = operators.top(); operators.pop();
+                string exp = op + op1 + op2;
+                operands.push(exp);
+            }
+            operators.pop(); // Pop '('
+        } else {
+            while (!operators.empty() && precedence(operators.top()) >= precedence(current)) {
+                string op2 = operands.top(); operands.pop();
+                string op1 = operands.top(); operands.pop();
+                char op = operators.top(); operators.pop();
+                string exp = op + op1 + op2;
+                operands.push(exp);
+            }
+            operators.push(current);
+        }
+    }
+    while (!operators.empty()) {
+        string op2 = operands.top(); operands.pop();
+        string op1 = operands.top(); operands.pop();
+        char op = operators.top(); operators.pop();
+        string exp = op + op1 + op2;
+        operands.push(exp);
+    }
+    return operands.top();
+}
+
+int evaluatePostfix(const string &expression) {
+    stack<int> operands;
+    for (int i = 0; i < expression.size(); i++) {
+        char current = expression[i];
+        if (isdigit(current)) {
+            operands.push(current - '0'); 
+        } else {
+            int b = operands.top(); operands.pop();
+            int a = operands.top(); operands.pop();
+            int result = applyOperation(a, b, current);
+            operands.push(result);
+        }
+    }
+    return operands.top();
+}
+
+int evaluateInfixExpression(const string &expression) {
+    string postfix = infixToPostfix(expression);
+    return evaluatePostfix(postfix);
+}
+
+int main() {
+    string expression;
+    cout << "Enter an infix expression: ";
+    cin >> expression;
+    string postfix = infixToPostfix(expression);
+    string prefix = infixToPrefix(expression);
+    int result = evaluateInfixExpression(expression);
+    cout << "Postfix Expression: " << postfix << endl;
+    cout << "Prefix Expression: " << prefix << endl;
+    cout << "Result: " << result << endl;
+    return 0;
+}

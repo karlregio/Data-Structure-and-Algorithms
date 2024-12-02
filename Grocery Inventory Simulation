@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <string>
+
+using namespace std;
+
+string vectorToString(const vector<string>& vec, const string& label) {
+    string result = label + " [";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        result += "\"" + vec[i] + "\"";
+        if (i < vec.size() - 1) result += ", ";
+    }
+    result += "]\n";
+    return result;
+}
+
+int main() {
+    
+    vector<string> currentInventory = {"apples", "bananas", "oranges", "pears"};
+    vector<string> shipment = {"kiwis", "bananas", "grapes"};
+    unordered_set<string> soldOutItems = {"oranges", "apples"};
+
+    cout << vectorToString(currentInventory, "Current Inventory:");
+    cout << vectorToString(shipment, "Shipment:");
+
+    unordered_set<string> updatedInventorySet(currentInventory.begin(), currentInventory.end());
+
+    for (const auto& item : shipment) {
+        updatedInventorySet.insert(item);
+    }
+
+
+    for (const auto& item : soldOutItems) {
+        updatedInventorySet.erase(item);
+    }
+
+    vector<string> updatedInventory(updatedInventorySet.begin(), updatedInventorySet.end());
+
+    cout << vectorToString(vector<string>(soldOutItems.begin(), soldOutItems.end()), "Sold-out items:");
+    cout << vectorToString(updatedInventory, "Updated Inventory:");
+
+    return 0;
+
+}
